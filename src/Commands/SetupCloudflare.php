@@ -46,20 +46,33 @@ class SetupCloudflare extends Command
 
     private function addCacheRules(CloudflareCacher $cacher, string $zone, Collection $hosts): void
     {
-        $rules = $this->cacheRules($cacher, $hosts);
+        $cloudflare = $cacher->cloudflare();
 
-        $existingRules = collect($cacher->cloudflare()->cacheRules($zone))
+        $cloudflare->updateCacheRules($zone, $this->mergeRules(
+            $cloudflare->cacheRules($zone),
+            $this->cacheRules($cacher, $hosts),
+        ));
+
+        $cloudflare->updateCacheResponseRules($zone, $this->mergeRules(
+            $cloudflare->cacheResponseRules($zone),
+            $this->cacheResponseRules($hosts),
+        ));
+    }
+
+    private function mergeRules(array $existingRules, array $rules): array
+    {
+        $existingRules = collect($existingRules)
             ->reject(fn ($rule) => in_array($rule['ref'] ?? null, Arr::pluck($rules, 'ref')))
             ->map(fn ($rule) => Arr::except($rule, ['version', 'last_updated']))
             ->values()
             ->all();
 
-        $cacher->cloudflare()->updateCacheRules($zone, [...$existingRules, ...$rules]);
+        return [...$existingRules, ...$rules];
     }
 
     private function cacheRules(CloudflareCacher $cacher, Collection $hosts): array
     {
-        $hostExpression = 'http.host in {'.$hosts->map(fn ($host) => "\"{$host}\"")->implode(' ').'}';
+        $hostExpression = $this->hostExpression($hosts);
 
         $cacheSettings = [
             'cache' => true,
@@ -87,5 +100,25 @@ class SetupCloudflare extends Command
                 'action_parameters' => ['cache' => false],
             ],
         ];
+    }
+
+    private function cacheResponseRules(Collection $hosts): array
+    {
+        $hostExpression = $this->hostExpression($hosts);
+
+        return [
+            [
+                'ref' => 'statamic_strip_cookies',
+                'description' => 'Statamic: strip cookies from cacheable pages, like the ones a host\'s own Cloudflare zone adds',
+                'expression' => "({$hostExpression} and any(http.response.headers.names[*] == \"cdn-cache-control\"))",
+                'action' => 'set_cache_settings',
+                'action_parameters' => ['strip_set_cookie' => true],
+            ],
+        ];
+    }
+
+    private function hostExpression(Collection $hosts): string
+    {
+        return 'http.host in {'.$hosts->map(fn ($host) => "\"{$host}\"")->implode(' ').'}';
     }
 }

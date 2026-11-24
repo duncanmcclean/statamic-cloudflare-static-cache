@@ -24,6 +24,12 @@ class SetupCloudflareTest extends TestCase
             $this->cacheRulesUrl('zone-two') => Http::sequence()
                 ->push(['success' => false], 404)
                 ->push(['success' => true]),
+            $this->cacheResponseRulesUrl('zone-one') => Http::sequence()
+                ->push(['result' => ['rules' => [
+                    ['id' => 'ghi', 'version' => '2', 'ref' => 'custom', 'expression' => 'true', 'action' => 'set_cache_tags'],
+                    ['id' => 'jkl', 'version' => '1', 'ref' => 'statamic_strip_cookies', 'expression' => 'old', 'action' => 'set_cache_settings'],
+                ]]])
+                ->push(['success' => true]),
             '*' => Http::response(['success' => true]),
         ]);
     }
@@ -31,6 +37,11 @@ class SetupCloudflareTest extends TestCase
     private function cacheRulesUrl(string $zone): string
     {
         return "https://api.cloudflare.com/client/v4/zones/{$zone}/rulesets/phases/http_request_cache_settings/entrypoint";
+    }
+
+    private function cacheResponseRulesUrl(string $zone): string
+    {
+        return "https://api.cloudflare.com/client/v4/zones/{$zone}/rulesets/phases/http_response_cache_settings/entrypoint";
     }
 
     #[Test]
@@ -76,6 +87,26 @@ class SetupCloudflareTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->method() === 'PUT'
             && $request->url() === $this->cacheRulesUrl('zone-two')
             && $request['rules'][0]['action_parameters']['cache_key'] === ['custom_key' => ['query_string' => ['exclude' => ['all' => true]]]]);
+    }
+
+    #[Test]
+    public function it_strips_cookies_from_cacheable_pages_after_existing_response_rules()
+    {
+        $this->artisan('statamic:cloudflare:setup')->assertSuccessful();
+
+        Http::assertSent(function (Request $request) {
+            if ($request->method() !== 'PUT' || $request->url() !== $this->cacheResponseRulesUrl('zone-one')) {
+                return false;
+            }
+
+            $rules = $request['rules'];
+
+            return count($rules) === 2
+                && $rules[0] === ['id' => 'ghi', 'ref' => 'custom', 'expression' => 'true', 'action' => 'set_cache_tags']
+                && $rules[1]['ref'] === 'statamic_strip_cookies'
+                && $rules[1]['expression'] === '(http.host in {"example.com" "www.example.com"} and any(http.response.headers.names[*] == "cdn-cache-control"))'
+                && $rules[1]['action_parameters'] === ['strip_set_cookie' => true];
+        });
     }
 
     #[Test]

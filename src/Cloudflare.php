@@ -18,7 +18,27 @@ class Cloudflare
 
     public function cacheRules(string $zone): array
     {
-        $response = $this->request()->get("zones/{$zone}/rulesets/phases/http_request_cache_settings/entrypoint");
+        return $this->rules($zone, 'http_request_cache_settings');
+    }
+
+    public function updateCacheRules(string $zone, array $rules): void
+    {
+        $this->updateRules($zone, 'http_request_cache_settings', $rules);
+    }
+
+    public function cacheResponseRules(string $zone): array
+    {
+        return $this->rules($zone, 'http_response_cache_settings');
+    }
+
+    public function updateCacheResponseRules(string $zone, array $rules): void
+    {
+        $this->updateRules($zone, 'http_response_cache_settings', $rules);
+    }
+
+    private function rules(string $zone, string $phase): array
+    {
+        $response = $this->request()->get("zones/{$zone}/rulesets/phases/{$phase}/entrypoint");
 
         if ($response->notFound()) {
             return [];
@@ -27,10 +47,10 @@ class Cloudflare
         return $response->throw()->json('result.rules') ?? [];
     }
 
-    public function updateCacheRules(string $zone, array $rules): void
+    private function updateRules(string $zone, string $phase, array $rules): void
     {
         $this->request()
-            ->put("zones/{$zone}/rulesets/phases/http_request_cache_settings/entrypoint", ['rules' => $rules])
+            ->put("zones/{$zone}/rulesets/phases/{$phase}/entrypoint", ['rules' => $rules])
             ->throw();
     }
 

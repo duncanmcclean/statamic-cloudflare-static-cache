@@ -70,7 +70,7 @@ Multisites on other domains add their own host and zone. Multisites in subdirect
 
 ## How it works
 
-- **Caching:** cacheable pages are sent with `CDN-Cache-Control`, so Cloudflare keeps them for `expiry`, while browsers always revalidate. Unlike `Cloudflare-CDN-Cache-Control`, it's passed on when your host runs its own Cloudflare zone in front of your app, like Laravel Cloud does. Turn off your host's edge cache (on Laravel Cloud, bypass the cache in the **Edge network** settings), since the addon can't purge it. Cookies are stripped from those responses, since Cloudflare won't cache a response that sets one.
+- **Caching:** cacheable pages are sent with `CDN-Cache-Control`, so Cloudflare keeps them for `expiry`, while browsers always revalidate. Unlike `Cloudflare-CDN-Cache-Control`, it's passed on when your host runs its own Cloudflare zone in front of your app, like Laravel Cloud does. Turn off your host's edge cache (on Laravel Cloud, bypass the cache in the **Edge network** settings), since the addon can't purge it. Cookies are stripped from those responses, since Cloudflare won't cache a response that sets one. The setup command's cookie rule also strips any your host's Cloudflare zone adds, such as `__cf_bm`.
 - **Logged-in users:** a `statamic_logged_in` cookie is set while someone is logged in, and the setup command's bypass rule skips the cache when it's present.
 - **Invalidation:** invalidated URLs are collected and purged by URL in batches of 100. When Cloudflare rate limits a purge, the remaining URLs are retried later. Purged pages are then warmed using Statamic's warm job.
 - **Clearing:** `static:clear` purges every configured host.
@@ -82,6 +82,7 @@ For each zone, `cloudflare:setup`:
 
 - adds a cache rule that makes your hosts' pages eligible for cache, respecting the headers Statamic sends,
 - adds a rule after it that bypasses the cache for logged-in users,
+- adds a cache response rule that strips cookies from cacheable pages before Cloudflare decides whether to cache them,
 - ignores query strings in the cache key when `ignore_query_strings` is enabled,
 - enables Smart Tiered Cache, so a warmed page serves every Cloudflare data centre.
 
