@@ -1,0 +1,16 @@
+name: Code Style
+
+on:
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pint:
+    uses: duncanmcclean/.github/.github/workflows/code-style.yaml@0711e4ce063444dd01bd24d4226cbf866e08d273 # v1.0.2
+    permissions:
+      contents: read
