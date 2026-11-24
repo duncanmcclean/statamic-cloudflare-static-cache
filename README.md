@@ -12,7 +12,7 @@ Statamic marks pages as cacheable, Cloudflare caches them at the edge, and your 
     composer require duncanmcclean/statamic-cloudflare-static-cache
     ```
 
-2. In Cloudflare, [create an API token](https://dash.cloudflare.com/profile/api-tokens) with the **Cache Purge**, **Cache Rules** and **Zone Settings** permissions. Then copy your domain's **Zone ID** from its overview page.
+2. In Cloudflare, [create an API token](https://dash.cloudflare.com/profile/api-tokens) with these **Zone** permissions: **Cache Purge**, **Cache Settings** (called **Cache Rules** in some accounts) and **Zone Settings**, each set to **Edit**. Then copy your domain's **Zone ID** from its overview page.
 
 3. Add them to your `.env`, and switch to the `cloudflare` strategy:
 
