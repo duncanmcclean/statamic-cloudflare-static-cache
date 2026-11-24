@@ -37,7 +37,7 @@ class CloudflareCacherTest extends TestCase
         $response->assertOk();
 
         $this->assertEquals('max-age=0, must-revalidate, public', $response->headers->get('Cache-Control'));
-        $this->assertEquals('max-age=31536000', $response->headers->get('Cloudflare-CDN-Cache-Control'));
+        $this->assertEquals('max-age=31536000', $response->headers->get('CDN-Cache-Control'));
         $this->assertEmpty($response->headers->getCookies());
         $this->assertContains('/about', app(Cacher::class)->getUrls('https://example.com')->all());
     }
@@ -48,7 +48,7 @@ class CloudflareCacherTest extends TestCase
         config()->set('statamic.static_caching.strategies.cloudflare.expiry', 30);
         app()->forgetInstance(StaticCacheManager::class);
 
-        $this->get('https://example.com/about')->assertHeader('Cloudflare-CDN-Cache-Control', 'max-age=1800');
+        $this->get('https://example.com/about')->assertHeader('CDN-Cache-Control', 'max-age=1800');
     }
 
     #[Test]
@@ -58,7 +58,7 @@ class CloudflareCacherTest extends TestCase
 
         $response = $this->get('https://example.com/about');
 
-        $this->assertFalse($response->headers->has('Cloudflare-CDN-Cache-Control'));
+        $this->assertFalse($response->headers->has('CDN-Cache-Control'));
         $this->assertEmpty(app(Cacher::class)->getUrls('https://example.com'));
     }
 
@@ -70,7 +70,7 @@ class CloudflareCacherTest extends TestCase
 
         $response = $this->get('https://example.com/about');
 
-        $this->assertFalse($response->headers->has('Cloudflare-CDN-Cache-Control'));
+        $this->assertFalse($response->headers->has('CDN-Cache-Control'));
     }
 
     #[Test]

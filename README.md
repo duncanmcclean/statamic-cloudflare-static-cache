@@ -70,7 +70,7 @@ Multisites on other domains add their own host and zone. Multisites in subdirect
 
 ## How it works
 
-- **Caching:** cacheable pages are sent with `Cloudflare-CDN-Cache-Control`, so Cloudflare keeps them for `expiry`, while browsers always revalidate. Cookies are stripped from those responses, since Cloudflare won't cache a response that sets one.
+- **Caching:** cacheable pages are sent with `CDN-Cache-Control`, so Cloudflare keeps them for `expiry`, while browsers always revalidate. Unlike `Cloudflare-CDN-Cache-Control`, it's passed on when your host runs its own Cloudflare zone in front of your app, like Laravel Cloud does. Turn off your host's edge cache (on Laravel Cloud, bypass the cache in the **Edge network** settings), since the addon can't purge it. Cookies are stripped from those responses, since Cloudflare won't cache a response that sets one.
 - **Logged-in users:** a `statamic_logged_in` cookie is set while someone is logged in, and the setup command's bypass rule skips the cache when it's present.
 - **Invalidation:** invalidated URLs are collected and purged by URL in batches of 100. When Cloudflare rate limits a purge, the remaining URLs are retried later. Purged pages are then warmed using Statamic's warm job.
 - **Clearing:** `static:clear` purges every configured host.

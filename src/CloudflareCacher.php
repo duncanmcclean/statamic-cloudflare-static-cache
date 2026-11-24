@@ -31,7 +31,7 @@ class CloudflareCacher extends FileCacher
 
             $event->response->headers->remove('Set-Cookie');
             $event->response->headers->set('Cache-Control', 'public, max-age=0, must-revalidate');
-            $event->response->headers->set('Cloudflare-CDN-Cache-Control', 'max-age='.$this->edgeTtl());
+            $event->response->headers->set('CDN-Cache-Control', 'max-age='.$this->edgeTtl());
 
             $this->cacheUrl($this->makeHash($url), ...$this->getPathAndDomain($url));
         });
