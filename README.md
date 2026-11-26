@@ -4,6 +4,9 @@ A static caching strategy for Statamic that keeps your pages in Cloudflare's cac
 
 Statamic marks pages as cacheable, Cloudflare caches them at the edge, and your invalidation rules and `php please static:clear` purge them from Cloudflare.
 
+> [!WARNING]  
+> This addon is experimental. I'm currently testing it on my own sites. I'll publish it on the Statamic Marketplace once I'm happy with it (or maybe I won't, who knows).
+
 ## Installation
 
 1. Require the addon:
